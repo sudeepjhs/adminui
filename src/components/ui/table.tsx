@@ -95,53 +95,55 @@ const SelectableTable: React.FC<SelectableTableProps> = ({
 
     return (
         <Stack width="full" gap="5">
-            <Table.Root {...rest}>
-                <Table.Header>
-                    <Table.Row>
-                        <Table.ColumnHeader w="6">
-                            <Checkbox
-                                top="1"
-                                aria-label="Select all rows"
-                                checked={indeterminate ? "indeterminate" : selection.length > 0} // Set checkbox state based on selection
-                                onCheckedChange={(changes) => {
-                                    setSelection(
-                                        changes.checked ? data.map((item) => item.id) : [] // Select or deselect all rows
-                                    );
-                                }}
-                            />
-                        </Table.ColumnHeader>
-                        {tablecolumns.map((col) => (
-                            <Table.ColumnHeader key={col.key}>{col.label}</Table.ColumnHeader>
-                        ))}
-                    </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                    {paginatedData.map((item, index) => (
-                        <Table.Row
-                            key={item.id || index}
-                            data-selected={selection.includes(item.id) ? "" : undefined} // Mark row as selected if in selection
-                        >
-                            <Table.Cell>
+            <Table.ScrollArea>
+                <Table.Root {...rest}>
+                    <Table.Header>
+                        <Table.Row>
+                            <Table.ColumnHeader w="6">
                                 <Checkbox
                                     top="1"
-                                    aria-label="Select row"
-                                    checked={selection.includes(item.id)} // Checkbox state for individual row
-                                    onCheckedChange={() => toggleSelection(item.id)} // Toggle selection on checkbox change
+                                    aria-label="Select all rows"
+                                    checked={indeterminate ? "indeterminate" : selection.length > 0} // Set checkbox state based on selection
+                                    onCheckedChange={(changes) => {
+                                        setSelection(
+                                            changes.checked ? data.map((item) => item.id) : [] // Select or deselect all rows
+                                        );
+                                    }}
                                 />
-                            </Table.Cell>
+                            </Table.ColumnHeader>
                             {tablecolumns.map((col) => (
-                                <Table.Cell key={col.key}>
-                                    {typeof col.render === "function"
-                                        ? col.render(item)
-                                        : <Text fontWeight="normal">{item[col.key]}</Text>}
-                                </Table.Cell>
+                                <Table.ColumnHeader minW={"200px"} key={col.key}>{col.label}</Table.ColumnHeader>
                             ))}
                         </Table.Row>
-                    ))}
-                </Table.Body>
-            </Table.Root>
-
-            <HStack wrap="wrap" justifyContent="center">
+                    </Table.Header>
+                    <Table.Body>
+                        {paginatedData.map((item, index) => (
+                            <Table.Row
+                                key={item.id || index}
+                                data-selected={selection.includes(item.id) ? "" : undefined} // Mark row as selected if in selection
+                                minW={"fit-content"}
+                            >
+                                <Table.Cell>
+                                    <Checkbox
+                                        top="1"
+                                        aria-label="Select row"
+                                        checked={selection.includes(item.id)} // Checkbox state for individual row
+                                        onCheckedChange={() => toggleSelection(item.id)} // Toggle selection on checkbox change
+                                    />
+                                </Table.Cell>
+                                {tablecolumns.map((col) => (
+                                    <Table.Cell key={col.key}>
+                                        {typeof col.render === "function"
+                                            ? col.render(item)
+                                            : <Text fontWeight="normal">{item[col.key]}</Text>}
+                                    </Table.Cell>
+                                ))}
+                            </Table.Row>
+                        ))}
+                    </Table.Body>
+                </Table.Root>
+            </Table.ScrollArea>
+            <HStack w="full" justifyContent="center">
                 <PaginationRoot
                     count={data.length} // Total number of items
                     pageSize={pageSize} // Number of items per page
