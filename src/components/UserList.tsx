@@ -1,18 +1,19 @@
 "use client"
-import { useUserTable } from "@/hooks/useUserTable"
-import { pickPalette } from "@/utils/helper"
+/* eslint-disable react/display-name */
+import React, { FC, use, useCallback, useMemo, useState } from "react"
 import {
     Avatar,
     Button,
     Flex,
-    Group,
     HStack,
     IconButton,
     Input,
     Stack
 } from "@chakra-ui/react"
-import React, { FC, use, useCallback, useMemo, useState } from "react"
 import { FaEdit, FaSave, FaSearch, FaTrashAlt } from "react-icons/fa"
+
+import { useUserTable } from "@/hooks/useUserTable"
+import { pickPalette } from "@/utils/helper"
 import ConfirmationDialog from "./ConfirmationDialog"
 import { useColorModeValue } from "./ui/color-mode"
 import SelectableTable, { Action, Column } from "./ui/table"
@@ -22,21 +23,32 @@ interface UserListProps {
 }
 
 const UserList: FC<UserListProps> = ({ users }) => {
-    const initialUsers: UserData[] = use(users)
+    const buttonBg = useColorModeValue("blackAlpha.300", "gray.800")
+    const initialUsers = use(users)
+
+    const {
+        deleteUser,
+        editMode,
+        enterEditMode,
+        exitEditMode,
+        filteredData,
+        selectedUser,
+        setSelectedUser,
+        userDataList,
+        updateUserField
+    } = useUserTable(initialUsers)
+
     const [open, setOpen] = useState(false)
-    const { deleteUser, editMode, enterEditMode, exitEditMode, filteredData, selectedUser, setSelectedUser, userDataList, updateUserField } = useUserTable(initialUsers)
 
     const handleInputChange = useCallback((id: string, field: keyof UserData, value: string) => {
         updateUserField(id, field, value)
     }, [updateUserField])
 
     const handleEdit = useCallback((e: React.MouseEvent<HTMLButtonElement>, userId: string) => {
-        e.stopPropagation();
-        const button = e.target as HTMLButtonElement
-        const tr = button.closest("tr")
-        if (!tr) return
+        e.stopPropagation()
         enterEditMode(userId)
-        tr.querySelectorAll("input")[1].focus();
+        const tr = (e.target as HTMLElement).closest("tr")
+        tr?.querySelectorAll("input")[1]?.focus()
     }, [enterEditMode])
 
     const handleSave = useCallback((userId: string) => {
@@ -45,7 +57,7 @@ const UserList: FC<UserListProps> = ({ users }) => {
 
     const handleDelete = useCallback((user: UserData) => {
         setSelectedUser(user)
-        setOpen(() => true)
+        setOpen(true)
     }, [setSelectedUser])
 
     const handleSearch = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -55,18 +67,19 @@ const UserList: FC<UserListProps> = ({ users }) => {
     }, [filteredData])
 
     const handleSearchClick = useCallback(() => {
-        const input = document.getElementById("search-input") as HTMLInputElement
+        const input = document.getElementById("search-input") as HTMLInputElement | null
         if (input) filteredData(input.value)
     }, [filteredData])
 
-    const handleConfirmDelete = () => {
-        if (!selectedUser) return
-        deleteUser(selectedUser.id)
-        setSelectedUser(() => null)
-        setOpen(() => false)
-    }
+    const handleConfirmDelete = useCallback(() => {
+        if (selectedUser) {
+            deleteUser(selectedUser.id)
+            setSelectedUser(null)
+            setOpen(false)
+        }
+    }, [selectedUser, deleteUser, setSelectedUser])
 
-    const renderNameCell = (item: unknown) => {
+    const renderNameCell = useCallback((item: unknown) => {
         const user = item as UserData
         const isEditing = editMode.has(user.id)
 
@@ -78,18 +91,19 @@ const UserList: FC<UserListProps> = ({ users }) => {
                 <Input
                     name="name"
                     value={user.name}
-                    onChange={(e) => handleInputChange(user.id, 'name', e.target.value)}
+                    onChange={(e) => handleInputChange(user.id, "name", e.target.value)}
                     variant="flushed"
                     readOnly={!isEditing}
                     fontWeight="medium"
                 />
             </HStack>
         )
-    }
+    }, [editMode, handleInputChange])
 
-    const renderInputCell = (field: keyof UserData) => (item: unknown) => {
+    const renderInputCell = useCallback((field: keyof UserData) => (item: unknown) => {
         const user = item as UserData
         const isEditing = editMode.has(user.id)
+
         return (
             <Input
                 name={field}
@@ -99,9 +113,9 @@ const UserList: FC<UserListProps> = ({ users }) => {
                 readOnly={!isEditing}
             />
         )
-    }
+    }, [editMode, handleInputChange])
 
-    const renderActionCell = (item: unknown) => {
+    const renderActionCell = useCallback((item: unknown) => {
         const user = item as UserData
         const isEditing = editMode.has(user.id)
 
@@ -114,7 +128,8 @@ const UserList: FC<UserListProps> = ({ users }) => {
                         size="xs"
                         bg="transparent"
                         color="inherit"
-                        _hover={{ bg: useColorModeValue("blackAlpha.300", "gray.800") }}
+                        _hover={{ bg: buttonBg }}
+
                     ><FaSave /></IconButton>
                 ) : (
                     <>
@@ -124,7 +139,8 @@ const UserList: FC<UserListProps> = ({ users }) => {
                             size="xs"
                             color="inherit"
                             bg="transparent"
-                            _hover={{ bg: useColorModeValue("blackAlpha.300", "gray.800") }}
+                            _hover={{ bg: buttonBg }}
+
                         ><FaEdit /></IconButton>
                         <IconButton
                             onClick={() => handleDelete(user)}
@@ -133,12 +149,13 @@ const UserList: FC<UserListProps> = ({ users }) => {
                             bg="transparent"
                             color="red.500"
                             _hover={{ bg: "red.800" }}
+
                         ><FaTrashAlt /></IconButton>
                     </>
                 )}
             </Flex>
         )
-    }
+    }, [editMode, handleSave, handleEdit, handleDelete, buttonBg])
 
     const columns: Column[] = useMemo(() => [
         { key: 'name', label: 'Name', render: renderNameCell },
@@ -153,23 +170,26 @@ const UserList: FC<UserListProps> = ({ users }) => {
             colorPalette: "red",
             variant: "outline",
             onClick: (selected) => {
-                selected.forEach((id) => {
-                    deleteUser(id)
-                })
-            },
+                selected.forEach(deleteUser)
+            }
         }
     ], [deleteUser])
 
     return (
         <Stack gap={4} borderRadius="md" boxShadow="md" py={4} px={6}>
-            <Group attached w="full" maxW="full" p={4}>
+            <Flex w="full" gap={2} px={4}>
                 <Input id="search-input" placeholder="Search" onKeyUp={handleSearch} />
                 <Button onClick={handleSearchClick} variant="outline" bg="bg.subtle">
                     <FaSearch />
                 </Button>
-            </Group>
+            </Flex>
 
-            <SelectableTable actions={actions} tablecolumns={columns} pageSize={10} data={userDataList} />
+            <SelectableTable
+                actions={actions}
+                tablecolumns={columns}
+                pageSize={10}
+                data={userDataList}
+            />
 
             <ConfirmationDialog
                 title="Delete User"
