@@ -28,7 +28,7 @@ const UserList: FC<UserListProps> = ({ users }) => {
 
     const handleInputChange = useCallback((id: string, field: keyof UserData, value: string) => {
         updateUserField(id, field, value)
-    }, [])
+    }, [updateUserField])
 
     const handleEdit = useCallback((e: React.MouseEvent<HTMLButtonElement>, userId: string) => {
         e.stopPropagation();
@@ -37,16 +37,16 @@ const UserList: FC<UserListProps> = ({ users }) => {
         if (!tr) return
         enterEditMode(userId)
         tr.querySelectorAll("input")[1].focus();
-    }, [])
+    }, [enterEditMode])
 
     const handleSave = useCallback((userId: string) => {
         exitEditMode(userId)
-    }, [])
+    }, [exitEditMode])
 
     const handleDelete = useCallback((user: UserData) => {
         setSelectedUser(user)
         setOpen(() => true)
-    }, [])
+    }, [setSelectedUser])
 
     const handleSearch = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
@@ -66,7 +66,7 @@ const UserList: FC<UserListProps> = ({ users }) => {
         setOpen(() => false)
     }
 
-    const renderNameCell = useCallback((item: unknown) => {
+    const renderNameCell = (item: unknown) => {
         const user = item as UserData
         const isEditing = editMode.has(user.id)
 
@@ -85,7 +85,7 @@ const UserList: FC<UserListProps> = ({ users }) => {
                 />
             </HStack>
         )
-    }, [editMode, handleInputChange])
+    }
 
     const renderInputCell = (field: keyof UserData) => (item: unknown) => {
         const user = item as UserData
@@ -101,7 +101,7 @@ const UserList: FC<UserListProps> = ({ users }) => {
         )
     }
 
-    const renderActionCell = useCallback((item: unknown) => {
+    const renderActionCell = (item: unknown) => {
         const user = item as UserData
         const isEditing = editMode.has(user.id)
 
@@ -138,7 +138,7 @@ const UserList: FC<UserListProps> = ({ users }) => {
                 )}
             </Flex>
         )
-    }, [editMode, handleEdit, handleDelete, handleSave])
+    }
 
     const columns: Column[] = useMemo(() => [
         { key: 'name', label: 'Name', render: renderNameCell },

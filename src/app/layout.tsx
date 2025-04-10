@@ -1,7 +1,7 @@
 import { Provider } from "@/components/ui/provider";
 
 import { ColorModeButton } from "@/components/ui/color-mode";
-import { Box, Container, Flex, Heading } from "@chakra-ui/react";
+import { Container, Flex, Heading } from "@chakra-ui/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
